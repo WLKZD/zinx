@@ -1,7 +1,6 @@
 package znet
 
 import (
-	"errors"
 	"fmt"
 	"net"
 	"zinx/ziface"
@@ -17,19 +16,21 @@ type Server struct {
 	IP string
 	//服务器监听的端口
 	Port int
+	//当前的Server添加一个router,server注册的链接对应的处理业务
+	Router ziface.IRouter
 }
 
 // 定义当前客户端链接的所绑定handle api(目前这个handle是写死的，以后优化应该由用户自定义handle方法)
-func CallBackToClient(conn *net.TCPConn, data []byte, cnt int) error {
-	//回显的业务
-	fmt.Println("[Conn Handle] CallbackToClient")
-	if _, err := conn.Write(data[:cnt]); err != nil {
-		fmt.Println("write back buf err ", err)
-		return errors.New("CallbackToClient error")
-	}
-	return nil
-
-}
+//func CallBackToClient(conn *net.TCPConn, data []byte, cnt int) error {
+//	//回显的业务
+//	fmt.Println("[Conn Handle] CallbackToClient")
+//	if _, err := conn.Write(data[:cnt]); err != nil {
+//		fmt.Println("write back buf err ", err)
+//		return errors.New("CallbackToClient error")
+//	}
+//	return nil
+//
+//}
 
 func (s *Server) Start() {
 	fmt.Printf("[start]Server Linstenner at IP :%s,Port %d is starting\n", s.IP, s.Port)
@@ -59,31 +60,12 @@ func (s *Server) Start() {
 				continue
 			}
 			//将处理新连接的业务方法和conn进行绑定，得到我们的链接模块
-			delConn := NewConnection(conn, cid, CallBackToClient)
+			delConn := NewConnection(conn, cid, s.Router)
 			cid++
 
 			//启动当前的链接业务方法
 			go delConn.Start()
 
-			//已经与客户端建立链接，做一些业务，做一个最基本的最大512字节长度的回显业务
-			/*
-				go func() {
-					for {
-						buf := make([]byte, 512)
-						cnt, err := conn.Read(buf)
-						if err != nil {
-							fmt.Println("recv buf err", err)
-							continue
-						}
-						fmt.Printf("read client buf:%s,cnt %d\n", buf, cnt)
-						//回显功能
-						if _, err := conn.Write(buf[:cnt]); err != nil {
-							fmt.Println("write back buf err", err)
-							continue
-						}
-					}
-				}()
-			*/
 		}
 	}()
 }
@@ -103,6 +85,11 @@ func (s *Server) Serve() {
 
 }
 
+func (s *Server) AddRouter(router ziface.IRouter) {
+	s.Router = router
+	println("Add Router Succ!")
+}
+
 //初始化Server模块的方法
 
 func NewServer(name string) ziface.IServer {
@@ -111,6 +98,7 @@ func NewServer(name string) ziface.IServer {
 		IPVersion: "tcp4",
 		IP:        "0.0.0.0",
 		Port:      8999,
+		Router:    nil,
 	}
 	return s
 }
