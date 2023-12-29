@@ -1,2 +1,1 @@
-# zinx 
-DTT
+# zinx
