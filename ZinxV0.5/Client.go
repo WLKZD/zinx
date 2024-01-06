@@ -25,12 +25,12 @@ func main() {
 	for {
 		//发送封包的message消息 MsgID:0
 		dp := znet.NewDataPack()
-		binartMsg, err := dp.Pack(znet.NewMsgPackage(0, []byte("ZinxV0.5 client Test Message")))
+		binaryMsg, err := dp.Pack(znet.NewMsgPackage(0, []byte("ZinxV0.5 client Test Message")))
 		if err != nil {
 			fmt.Println("Pack error:", err)
 			return
 		}
-		if _, err := conn.Write(binartMsg); err != nil {
+		if _, err := conn.Write(binaryMsg); err != nil {
 			fmt.Println("write error:", err)
 			return
 		}

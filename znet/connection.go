@@ -106,7 +106,6 @@ func (c Connection) Start() {
 	//启动从当前链接的读数据的业务
 	go c.StartReader()
 	//TODO启动从当前链接写数据的业务
-
 }
 
 // 停止链接，结束当前链接的工作
