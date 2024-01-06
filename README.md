@@ -1,6 +1,6 @@
 # zinx
 
-## ZinxV0.5
+## ZinxV0.5 
 
 ### 服务端
 
