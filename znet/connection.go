@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"zinx/utils"
 	"zinx/ziface"
 )
 
@@ -85,7 +86,13 @@ func (c *Connection) StartReader() {
 			conn: c,
 			msg:  msg,
 		}
-		go c.MsgHandle.DoMsgHandle(&req)
+
+		if utils.GlobalObject.WorkerPooleSize > 0 {
+			//已经开启了工作池机制，将消息发送给Worker工作池即可
+			c.MsgHandle.SendMsgToTaskQueue(&req)
+		} else {
+			go c.MsgHandle.DoMsgHandle(&req)
+		}
 	}
 }
 
