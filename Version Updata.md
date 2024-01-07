@@ -66,5 +66,5 @@ Connection.Writer读到c.ExitChan里的数据为True时也退出
 
 0.7版本对于每个连接Conneciton都会调用go c.MsgHandle.DoMsgHandle(&req)
 
-0.8版本服务端会创建一个工作池，规定了工作池的Woker数量，既创建的goroutine数量，每个Woker对应一个消息队列，安装分配算法（现在是根据ConnectionID%WorkerPoolSize）将消息发送给Worker工作池即可
+0.8版本服务端会创建一个工作池，规定了工作池的Woker数量，即创建的goroutine数量，每个Woker对应一个消息队列，根据分配算法（现在是根据ConnectionID%WorkerPoolSize）将消息发送给Worker工作池即可
 
