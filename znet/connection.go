@@ -14,6 +14,9 @@ import (
 */
 
 type Connection struct {
+	//当前Conn隶属于哪个Server
+	TcpServer ziface.IServer
+
 	//当前链接的socket TCP 套接字
 	Conn *net.TCPConn
 
@@ -37,8 +40,9 @@ type Connection struct {
 }
 
 // 初始化链接模块的方法
-func NewConnection(conn *net.TCPConn, connID uint32, msgHandle ziface.IMsgHandle) *Connection {
+func NewConnection(server ziface.IServer, conn *net.TCPConn, connID uint32, msgHandle ziface.IMsgHandle) *Connection {
 	c := &Connection{
+		TcpServer: server,
 		Conn:      conn,
 		ConnID:    connID,
 		MsgHandle: msgHandle,
@@ -46,6 +50,8 @@ func NewConnection(conn *net.TCPConn, connID uint32, msgHandle ziface.IMsgHandle
 		ExitChan:  make(chan bool),
 		msgChan:   make(chan []byte),
 	}
+	//将conn加入到ConnManager中
+	c.TcpServer.GetConnMgr().Add(c)
 	return c
 }
 
@@ -124,6 +130,9 @@ func (c *Connection) Start() {
 	go c.StartReader()
 	//TODO启动从当前链接写数据的业务
 	go c.StartWrite()
+
+	//按照开发者传递进来的 创建链接之后需要调用的处理业务，执行对应Hook函数
+	c.TcpServer.CallOnConnStart(c)
 }
 
 // 停止链接，结束当前链接的工作
@@ -136,11 +145,17 @@ func (c *Connection) Stop() {
 	}
 	c.isClose = true
 
+	//按照开发者传递进来的 销毁链接之前需要调用的处理业务，执行对应Hook函数
+	c.TcpServer.CallOnConnStop(c)
+
 	//关闭socket链接
 	c.Conn.Close()
 
 	//告知Writer关闭
 	c.ExitChan <- true
+
+	//将当前链接从ConnMar中摘除掉
+	c.TcpServer.GetConnMgr().Remove(c)
 
 	//回收资源
 	close(c.ExitChan)
